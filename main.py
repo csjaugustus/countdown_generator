@@ -131,13 +131,13 @@ class CountdownApp(QMainWindow):
 
         self.font_size_spin = QSpinBox()
         self.font_size_spin.setRange(10, 1000)
-        self.font_size_spin.setValue(150)
+        self.font_size_spin.setValue(200)
         left_layout.addWidget(QLabel("Font Size:"))
         left_layout.addWidget(self.font_size_spin)
 
         self.circle_radius_spin = QSpinBox()
         self.circle_radius_spin.setRange(10, 500)
-        self.circle_radius_spin.setValue(400)
+        self.circle_radius_spin.setValue(450)
         left_layout.addWidget(QLabel("Circle Radius:"))
         left_layout.addWidget(self.circle_radius_spin)
 
@@ -244,7 +244,7 @@ class CountdownApp(QMainWindow):
         style = self.style_combo.currentText()
         if style == "Circle":
             self.font_path_edit.setText(os.path.join(self.font_dir, "Poppins-Black.ttf"))
-            self.font_size_spin.setValue(150)
+            self.font_size_spin.setValue(200)
             # enable circle controls
             self.circle_radius_spin.setEnabled(True)
             self.circle_width_spin.setEnabled(True)
