@@ -19,7 +19,7 @@ Tired of being asked to pay a subscription fee for basic animations? Create one 
 
 1. **Clone the Repository**:
 ```bash
-git clone <repository-url>
+git clone "https://github.com/csjaugustus/countdown_generator.git"
 cd countdown_generator
 ```
 
