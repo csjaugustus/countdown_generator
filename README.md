@@ -1,5 +1,9 @@
 # Countdown Video Generator
 
+<p align="center">
+  <img src="counter.png" alt="Countdown Logo" width="100"/>
+</p>
+
 Tired of being asked to pay a subscription fee for basic animations? Create one yourself using this free script.
 
 By default, the timer comes with a black background. You can easily change the color if needed, but if you want transparency, it is not currently supported. This can be easily done in video editing software. For example, in FCP, you would use the "Luma Keyer" effect and it would be removed in an instant.

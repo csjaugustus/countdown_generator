@@ -232,8 +232,15 @@ class CountdownApp(QMainWindow):
         self.preview_slider.valueChanged.connect(self.update_preview)
         self.style_combo.currentIndexChanged.connect(self.on_style_changed)
 
-        # Set initial style and font path
-        self.font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+        def resource_path(relative_path):
+            """Get absolute path to resource (handles PyInstaller temp paths)."""
+            try:
+                base_path = sys._MEIPASS
+            except AttributeError:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, relative_path)
+
+        self.font_dir = resource_path("fonts")
         self.style_combo.setCurrentIndex(0)
         self.on_style_changed(0)
 
