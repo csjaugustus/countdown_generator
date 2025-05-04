@@ -23,6 +23,8 @@ By default, the timer comes with a black background. You can easily change the c
 
 ## Installation
 
+If you are unsure how to use Python, just download an executable from the [Releases page](https://github.com/csjaugustus/countdown_generator/releases).
+
 1. **Clone the Repository**:
 ```bash
 git clone "https://github.com/csjaugustus/countdown_generator.git"
