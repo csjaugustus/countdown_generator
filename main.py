@@ -304,9 +304,8 @@ class CountdownApp(QMainWindow):
         except OSError:
             font = ImageFont.load_default()
 
-        w, h = draw.textsize(time_str, font=font)
-        draw.text((width // 2 - w // 2, height // 2 - h // 2), time_str,
-                  font=font, fill=text_color)
+        draw.text((width // 2, height // 2), time_str,
+                  font=font, fill=text_color, anchor="mm")
 
         return np.array(img)
 
