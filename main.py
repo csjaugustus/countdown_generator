@@ -3,7 +3,7 @@ import os
 import numpy as np
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QSpinBox, QLineEdit, QPushButton, QProgressBar,
-                             QSlider, QColorDialog, QFileDialog)
+                             QSlider, QColorDialog, QFileDialog, QComboBox)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QIcon, QColor
 import cv2
@@ -14,7 +14,7 @@ class VideoGenerator(QThread):
     finished = pyqtSignal()
 
     def __init__(self, width, height, duration, font_size, circle_radius, circle_width,
-                 text_color, circle_color, bg_color, font_path, output_path):
+                 text_color, circle_color, bg_color, font_path, output_path, style):
         super().__init__()
         self.width = width
         self.height = height
@@ -27,12 +27,14 @@ class VideoGenerator(QThread):
         self.bg_color = bg_color
         self.font_path = font_path
         self.output_path = output_path
+        self.style = style
         self.fps = 30
         self.current_frame = 0
 
     def run(self):
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(self.output_path, fourcc, self.fps, (self.width, self.height))
+
         total_frames = int(self.duration * self.fps)
 
         for frame_num in range(total_frames):
@@ -62,25 +64,26 @@ class VideoGenerator(QThread):
         img = Image.new("RGB", (self.width, self.height), self.bg_color)
         draw = ImageDraw.Draw(img)
 
-        percent = t / self.duration
-        start_angle = -90
-        end_angle = -90 + 360 * percent
+        if self.style == "Circle":
+            percent = t / self.duration
+            start_angle = -90
+            end_angle = -90 + 360 * percent
 
-        center_x, center_y = self.width // 2, self.height // 2
-        x0 = center_x - self.circle_radius
-        y0 = center_y - self.circle_radius
-        x1 = center_x + self.circle_radius
-        y1 = center_y + self.circle_radius
+            center_x, center_y = self.width // 2, self.height // 2
+            x0 = center_x - self.circle_radius
+            y0 = center_y - self.circle_radius
+            x1 = center_x + self.circle_radius
+            y1 = center_y + self.circle_radius
 
-        draw.arc([x0, y0, x1, y1], start=start_angle, end=end_angle,
-                 fill=self.circle_color, width=self.circle_width)
+            draw.arc([x0, y0, x1, y1], start=start_angle, end=end_angle,
+                     fill=self.circle_color, width=self.circle_width)
 
         try:
             font = ImageFont.truetype(self.font_path, self.font_size)
         except OSError:
             font = ImageFont.load_default()
 
-        draw.text((center_x, center_y), time_str,
+        draw.text((self.width // 2, self.height // 2), time_str,
                   font=font, fill=self.text_color, anchor="mm")
 
         return np.array(img)
@@ -98,6 +101,14 @@ class CountdownApp(QMainWindow):
         # Left panel for controls
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
+
+        # Style selection
+        style_layout = QHBoxLayout()
+        style_layout.addWidget(QLabel("Style:"))
+        self.style_combo = QComboBox()
+        self.style_combo.addItems(["Circle", "Digital"])
+        style_layout.addWidget(self.style_combo)
+        left_layout.addLayout(style_layout)
 
         # Input controls
         self.width_spin = QSpinBox()
@@ -140,7 +151,6 @@ class CountdownApp(QMainWindow):
         font_path_layout = QHBoxLayout()
         font_path_layout.addWidget(QLabel("Font Path:"))
         self.font_path_edit = QLineEdit()
-        self.font_path_edit.setText("/Library/Fonts/Poppins-Bold.ttf")
         font_path_layout.addWidget(self.font_path_edit)
         font_browse_button = QPushButton("Browse")
         font_browse_button.clicked.connect(self.select_font)
@@ -220,8 +230,31 @@ class CountdownApp(QMainWindow):
         self.circle_width_spin.valueChanged.connect(self.update_preview)
         self.font_path_edit.textChanged.connect(self.update_preview)
         self.preview_slider.valueChanged.connect(self.update_preview)
+        self.style_combo.currentIndexChanged.connect(self.on_style_changed)
+
+        # Set initial style and font path
+        self.font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+        self.style_combo.setCurrentIndex(0)
+        self.on_style_changed(0)
 
         # Initial preview
+        self.update_preview()
+
+    def on_style_changed(self, index):
+        style = self.style_combo.currentText()
+        if style == "Circle":
+            self.font_path_edit.setText(os.path.join(self.font_dir, "Poppins-Black.ttf"))
+            self.font_size_spin.setValue(150)
+            # enable circle controls
+            self.circle_radius_spin.setEnabled(True)
+            self.circle_width_spin.setEnabled(True)
+        elif style == "Digital":
+            self.font_path_edit.setText(os.path.join(self.font_dir, "digital-7.ttf"))
+            self.font_size_spin.setValue(400)
+            # disable irrelevant controls
+            self.circle_radius_spin.setEnabled(False)
+            self.circle_width_spin.setEnabled(False)
+
         self.update_preview()
 
     def select_font(self):
@@ -236,7 +269,7 @@ class CountdownApp(QMainWindow):
 
     @staticmethod
     def generate_frame(width, height, t, duration, font_size, circle_radius, circle_width,
-                       text_color, circle_color, bg_color, font_path):
+                       text_color, circle_color, bg_color, font_path, style):
         remaining = max(duration - int(t), 0)
         mins = remaining // 60
         secs = remaining % 60
@@ -245,18 +278,19 @@ class CountdownApp(QMainWindow):
         img = Image.new("RGB", (width, height), bg_color)
         draw = ImageDraw.Draw(img)
 
-        percent = t / duration
-        start_angle = -90
-        end_angle = -90 + 360 * percent
+        if style == "Circle":
+            percent = t / duration
+            start_angle = -90
+            end_angle = -90 + 360 * percent
 
-        center_x, center_y = width // 2, height // 2
-        x0 = center_x - circle_radius
-        y0 = center_y - circle_radius
-        x1 = center_x + circle_radius
-        y1 = center_y + circle_radius
+            center_x, center_y = width // 2, height // 2
+            x0 = center_x - circle_radius
+            y0 = center_y - circle_radius
+            x1 = center_x + circle_radius
+            y1 = center_y + circle_radius
 
-        draw.arc([x0, y0, x1, y1], start=start_angle, end=end_angle,
-                 fill=circle_color, width=circle_width)
+            draw.arc([x0, y0, x1, y1], start=start_angle, end=end_angle,
+                     fill=circle_color, width=circle_width)
 
         try:
             font = ImageFont.truetype(font_path, font_size)
@@ -264,7 +298,7 @@ class CountdownApp(QMainWindow):
             font = ImageFont.load_default()
 
         w, h = draw.textsize(time_str, font=font)
-        draw.text((center_x - w // 2, center_y - h // 2), time_str,
+        draw.text((width // 2 - w // 2, height // 2 - h // 2), time_str,
                   font=font, fill=text_color)
 
         return np.array(img)
@@ -280,13 +314,14 @@ class CountdownApp(QMainWindow):
         circle_color = self.circle_color
         bg_color = self.bg_color
         font_path = self.font_path_edit.text()
+        style = self.style_combo.currentText()
 
         slider_value = self.preview_slider.value()
         t = (slider_value / 100.0) * duration
         self.time_label.setText(f"Time: {t:.1f} s")
 
         frame = self.generate_frame(width, height, t, duration, font_size, circle_radius,
-                                   circle_width, text_color, circle_color, bg_color, font_path)
+                                   circle_width, text_color, circle_color, bg_color, font_path, style)
         qimage = QImage(frame.data, frame.shape[1], frame.shape[0], frame.strides[0],
                         QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qimage)
@@ -331,10 +366,11 @@ class CountdownApp(QMainWindow):
         bg_color = self.bg_color
         font_path = self.font_path_edit.text()
         output_path = self.output_path_edit.text()
+        style = self.style_combo.currentText()
 
         self.generator = VideoGenerator(width, height, duration, font_size, circle_radius,
                                         circle_width, text_color, circle_color, bg_color,
-                                        font_path, output_path)
+                                        font_path, output_path, style)
         self.generator.progress.connect(self.progress_bar.setValue)
         self.generator.finished.connect(self.on_generation_finished)
         self.generate_button.setEnabled(False)
