@@ -23,12 +23,12 @@ git clone <repository-url>
 cd countdown_generator
 ```
 
-2. ***Install dependencies**:
+2. **Install dependencies**:
 ```bash
 pip install PyQt5 numpy opencv-python Pillow
 ```
 
-3. ***Run script***:
+3. **Run script**:
 ```bash
 python3 main.py
 ```
