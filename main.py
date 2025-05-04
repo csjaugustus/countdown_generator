@@ -1,8 +1,9 @@
 import sys
+import os
 import numpy as np
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QSpinBox, QLineEdit, QPushButton, QProgressBar,
-                             QSlider, QColorDialog)
+                             QSlider, QColorDialog, QFileDialog)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QIcon, QColor
 import cv2
@@ -135,10 +136,16 @@ class CountdownApp(QMainWindow):
         left_layout.addWidget(QLabel("Circle Width:"))
         left_layout.addWidget(self.circle_width_spin)
 
+        # Font path with file picker
+        font_path_layout = QHBoxLayout()
+        font_path_layout.addWidget(QLabel("Font Path:"))
         self.font_path_edit = QLineEdit()
         self.font_path_edit.setText("/Library/Fonts/Poppins-Bold.ttf")
-        left_layout.addWidget(QLabel("Font Path:"))
-        left_layout.addWidget(self.font_path_edit)
+        font_path_layout.addWidget(self.font_path_edit)
+        font_browse_button = QPushButton("Browse")
+        font_browse_button.clicked.connect(self.select_font)
+        font_path_layout.addWidget(font_browse_button)
+        left_layout.addLayout(font_path_layout)
 
         # Color selection buttons
         color_layout = QHBoxLayout()
@@ -162,6 +169,18 @@ class CountdownApp(QMainWindow):
         self.update_color_button(self.text_color_button, self.text_color)
         self.update_color_button(self.circle_color_button, self.circle_color)
         self.update_color_button(self.bg_color_button, self.bg_color)
+
+        # Output path input field
+        output_path_layout = QHBoxLayout()
+        output_path_layout.addWidget(QLabel("Output Path:"))
+        self.output_path_edit = QLineEdit()
+        default_output = os.path.join(os.path.expanduser('~'), 'Downloads', 'countdown.mp4')
+        self.output_path_edit.setText(default_output)
+        output_path_layout.addWidget(self.output_path_edit)
+        output_browse_button = QPushButton("Browse")
+        output_browse_button.clicked.connect(self.select_output_path)
+        output_path_layout.addWidget(output_browse_button)
+        left_layout.addLayout(output_path_layout)
 
         # Generate button
         self.generate_button = QPushButton("Generate Video")
@@ -204,6 +223,16 @@ class CountdownApp(QMainWindow):
 
         # Initial preview
         self.update_preview()
+
+    def select_font(self):
+        font_path, _ = QFileDialog.getOpenFileName(self, "Select Font File", "", "Font Files (*.ttf *.otf)")
+        if font_path:
+            self.font_path_edit.setText(font_path)
+
+    def select_output_path(self):
+        output_path, _ = QFileDialog.getSaveFileName(self, "Save Video As", os.path.join(os.path.expanduser('~'), 'Downloads', 'countdown.mp4'), "MP4 Files (*.mp4)")
+        if output_path:
+            self.output_path_edit.setText(output_path)
 
     @staticmethod
     def generate_frame(width, height, t, duration, font_size, circle_radius, circle_width,
@@ -301,7 +330,7 @@ class CountdownApp(QMainWindow):
         circle_color = self.circle_color
         bg_color = self.bg_color
         font_path = self.font_path_edit.text()
-        output_path = "output.mp4"
+        output_path = self.output_path_edit.text()
 
         self.generator = VideoGenerator(width, height, duration, font_size, circle_radius,
                                         circle_width, text_color, circle_color, bg_color,
